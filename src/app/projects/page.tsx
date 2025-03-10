@@ -1,408 +1,159 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api } from "@/utils/api";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
-import {
-  ChevronDown,
-  ChevronUp,
-  ChevronsUpDown,
-  Download,
-  Edit,
-  Plus,
-  Trash,
-} from "lucide-react";
-import * as XLSX from "xlsx";
+import { Edit, ExternalLink, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "react-hot-toast";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import DynamicTable, { Column } from "@/components/DynamicTable"; // Adjust the import path
 import CreateProjectForm from "@/components/forms/CreateProjectForm";
-import toast from "react-hot-toast";
-import { DialogDescription } from "@radix-ui/react-dialog";
 
-// Define project interface
-interface project {
-  id: string;
-  name: string;
-  website?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  createdAt: string;
-}
-
-const projectTable = () => {
-  const [projects, setprojects] = useState<project[]>([]);
-  const [page, setPage] = useState(1);
-  const limit = 10;
-  const [loading, setLoading] = useState(false);
-  const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("");
-  const [order, setOrder] = useState("");
+const page = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedproject, setSelectedproject] = useState<project | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [projectToDelete, setprojectToDelete] = useState<project | null>(null);
-  const [isDownloadDilogOpen, setIsDownloadDilogOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<IProject | null>(null);
 
-  useEffect(() => {
-    const fetchprojects = async () => {
-      const body: any = {
-        limit,
-        page,
+  // Define columns for the brand table
+  const columns: Column<IProject>[] = [
+    { key: "name", label: "Name", visible: true, sortable: true },
+    {
+      key: "brand",
+      label: "Brand",
+      visible: true,
+      sortable: true,
+      render: (project) => project.brand?.name || "-",
+    },
+    {
+      key: "startDate",
+      label: "Start Date",
+      visible: true,
+      sortable: true,
+      render: (project) => (
+        <Badge variant="outline" className="font-normal">
+          {format(new Date(project.startDate), "dd MMM yyyy")}
+        </Badge>
+      ),
+    },
+    {
+      key: "endDate",
+      label: "End Date",
+      visible: true,
+      sortable: true,
+      render: (project) => (
+        <Badge variant="outline" className="font-normal">
+          {format(new Date(project.endDate), "dd MMM yyyy")}
+        </Badge>
+      ),
+    },
+    {
+      key: "createdAt",
+      label: "Created At",
+      visible: true,
+      sortable: true,
+      render: (brand) => (
+        <Badge variant="outline" className="font-normal">
+          {format(new Date(brand.createdAt), "dd MMM yyyy")}
+        </Badge>
+      ),
+    },
+    { key: "action", label: "Action", visible: true, sortable: false },
+  ];
+
+  // Fetch data function for the table
+  const fetchBrands = async (params: any) => {
+    try {
+      const res = await api.project.getProjects(params);
+      return {
+        data: res.data,
+        total: res.total,
       };
-      if (search.length > 0) body.search = search;
-      if (sortBy) {
-        body.sortBy = sortBy;
-        body.order = order;
-      }
-
-      setLoading(true);
-      try {
-        const res = await api.project.getProjects(body);
-        setprojects(res.data);
-        setTotal(res.total);
-      } catch (error) {
-        toast.error("Failed to load Data", { position: "top-center" });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchprojects();
-  }, [page, search, sortBy, order, isDialogOpen]);
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    setPage(1); // Reset to first page when searching
+    } catch (error) {
+      toast.error("Failed to load projects", { position: "top-center" });
+      return { data: [], total: 0 };
+    }
   };
 
-  const handleSort = (column: string) => {
-    if (sortBy === column) {
-      if (order === "asc") {
-        setOrder("desc");
-      } else if (order === "desc") {
-        setSortBy("");
-        setOrder("");
-      } else {
-        setOrder("asc");
-      }
+  console.log();
+
+  // Download excel function
+  const downloadProjectsExcel = async (selectedIds?: string[]) => {
+    if (selectedIds && selectedIds.length > 0) {
+      const body = { ids: selectedIds };
+      return api.project.getProjects({});
     } else {
-      setSortBy(column);
-      setOrder("asc");
+      return api.brand.getBrands({});
     }
   };
 
-  const getSortIcon = (column: string) => {
-    if (sortBy === column) {
-      return order === "asc" ? (
-        <ChevronUp size={16} />
-      ) : (
-        <ChevronDown size={16} />
-      );
-    }
-    return <ChevronsUpDown size={16} className="text-gray-400" />;
-  };
-
-  const openDeleteConfirmation = (project: any) => {
-    setprojectToDelete(project);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const closeDeleteDialog = () => {
-    setIsDeleteDialogOpen(false);
-    setprojectToDelete(null);
-  };
-
-  const handleDelete = async () => {
-    if (!projectToDelete) return;
-
-    try {
-      await api.project.deleteProject(projectToDelete.id);
-      // Refresh the projects list
-      const body: any = {
-        limit,
-        page,
-      };
-      const res = await api.project.getProjects(body);
-      setprojects(res.data);
-      setTotal(res.total);
-      toast.success(`Successfully Deleted project`, {
-        position: "top-center",
-      });
-      closeDeleteDialog();
-    } catch (error) {
-      toast.error(`Failed to Delete project`, {
-        position: "top-center",
-      });
-    }
-  };
-
-  const openDownloadConfirmation = () => {
-    setIsDownloadDilogOpen(true);
-  };
-
-  const closeDownloadDialog = () => {
-    setIsDownloadDilogOpen(false);
-  };
-
-  const handleDownloadExcel = async () => {
-    try {
-      const response = await api.project.getProjects({}); // Fetch all data without filters
-      const jsonData = response.data;
-
-      const formattedData = jsonData.map((project: any, index: number) => ({
-        "Sr. No.": index + 1,
-        Name: project.name,
-        Brand: project.brand.name,
-        StartDate: project.startDate,
-        EndDate: project.endDate,
-        Description: project.description,
-        "Created At": format(new Date(project.createdAt), "dd MMM yyyy, HH:mm"),
-      }));
-
-      const worksheet = XLSX.utils.json_to_sheet(formattedData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "projects");
-
-      XLSX.writeFile(workbook, "projects.xlsx");
-      toast.success(`Excel Download Initiated`, {
-        position: "top-center",
-      });
-    } catch (error) {
-      toast.error(`Failed to download Excel`, {
-        position: "top-center",
-      });
-    }
-  };
-
-  const handleEditproject = (project: any) => {
-    setSelectedproject(project);
+  // Handler for editing brand
+  const handleEditProject = (project: IProject) => {
+    setSelectedProject(project);
     setIsDialogOpen(true);
   };
 
+  // Render action buttons for each row
+  const renderActions = (project: IProject, onRefresh: () => void) => (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-primary cursor-pointer"
+        onClick={() => handleEditProject(project)}
+      >
+        <Edit className="h-4 w-4" />
+        <span className="sr-only">Edit</span>
+      </Button>
+    </div>
+  );
+
+  // Handle dialog close
   const handleCloseDialog = () => {
-    setIsDialogOpen((prev) => !prev);
-    setSelectedproject(null);
+    setIsDialogOpen(false);
+    setSelectedProject(null);
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex justify-between items-center">
-          Projects
-          <div className="flex gap-2">
-            <Button
-              onClick={openDownloadConfirmation}
-              variant="outline"
-              className="flex items-center gap-1 cursor-pointer"
-            >
-              <Download size={16} /> Download Excel
-            </Button>
-            <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-1 cursor-pointer"
-                >
-                  <Plus size={16} /> Add Project
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-[70vh] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>
-                    {selectedproject ? "Edit project" : "Project Registration"}
-                  </DialogTitle>
-                </DialogHeader>
-                <CreateProjectForm
-                  initialData={selectedproject}
-                  onClose={handleCloseDialog}
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardTitle>
-        <Input
-          type="text"
-          placeholder="Search projects..."
-          value={search}
-          onChange={handleSearchChange}
-          className="mt-2"
-        />
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Sr. No.</TableHead>
-              {[
-                { key: "name", label: "Name" },
-                { key: "brand", label: "Brand" },
-                { key: "startDate", label: "Start Date" },
-                { key: "endDate", label: "End Date" },
-                { key: "createdAt", label: "Created At" },
-                { key: "action", label: "Action" },
-              ].map(({ key, label }) => (
-                <TableHead
-                  key={key}
-                  onClick={() => key !== "action" && handleSort(key)}
-                  className={key !== "action" ? "cursor-pointer" : ""}
-                >
-                  <div className="flex items-center gap-1">
-                    {label} {key !== "action" && getSortIcon(key)}
-                  </div>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
+    <div className="container mx-auto py-8">
+      {/* <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-fit h-fit overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              {selectedProject ? "Edit Brand" : "Brand Registration"}
+            </DialogTitle>
+          </DialogHeader>
+          <CreateProjectForm
+            initialData={selectedBrand}
+            onClose={handleCloseDialog}
+          />
+        </DialogContent>
+      </Dialog> */}
 
-          <TableBody>
-            {projects.length > 0 ? (
-              projects.map((project: any, index: number) => (
-                <TableRow key={project.id}>
-                  <TableCell>{(page - 1) * limit + index + 1}</TableCell>
-                  <TableCell>{project.name}</TableCell>
-                  <TableCell>
-                    {project.brand.name ? project.brand.name : "-"}
-                  </TableCell>
-                  <TableCell>
-                    {project.startDate
-                      ? format(new Date(project.startDate), "dd MMM yyyy")
-                      : "-"}{" "}
-                  </TableCell>
-                  <TableCell>
-                    {project.endDate
-                      ? format(new Date(project.endDate), "dd MMM yyyy")
-                      : "-"}{" "}
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(project.createdAt), "dd MMM yyyy, HH:mm")}
-                  </TableCell>
-                  <TableCell className="flex gap-2">
-                    <button
-                      className="text-blue-600 cursor-pointer"
-                      onClick={() => handleEditproject(project)}
-                    >
-                      <Edit size={18} className="mr-1" />
-                    </button>
-                    {/* <button
-                      className="text-red-600 cursor-pointer"
-                      onClick={() => openDeleteConfirmation(project)}
-                    >
-                      <Trash size={18} className="mr-1" />
-                    </button> */}
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center">
-                  {loading ? "Loading..." : "No projects found."}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-
-        {/* Download Excel Confirmation Dialog */}
-        <Dialog open={isDownloadDilogOpen} onOpenChange={closeDownloadDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Confirm Download</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to download all project Data in Excel?
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="flex justify-end gap-2 sm:justify-end">
-              <Button
-                variant="outline"
-                onClick={closeDownloadDialog}
-                className="cursor-pointer"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="default"
-                onClick={handleDownloadExcel}
-                className="cursor-pointer"
-              >
-                Download
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Delete Confirmation Dialog */}
-        <Dialog open={isDeleteDialogOpen} onOpenChange={closeDeleteDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Confirm Deletion</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete the project "
-                {projectToDelete?.name}
-                "? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="flex justify-end gap-2 sm:justify-end">
-              <Button
-                variant="outline"
-                onClick={closeDeleteDialog}
-                className="cursor-pointer"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                className="cursor-pointer"
-              >
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Pagination */}
-        <div className="flex justify-between items-center mt-4">
-          <p className="text-sm text-gray-600">
-            Page {page} of {Math.ceil(total / limit)}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              className={`cursor-pointer`}
-              disabled={page === 1}
-              onClick={() => setPage((prev) => prev - 1)}
-            >
-              Previous
-            </Button>
-            <Button
-              className={`cursor-pointer`}
-              disabled={page * limit >= total}
-              onClick={() => setPage((prev) => prev + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      <DynamicTable<IProject>
+        title="Projects"
+        fetchData={fetchBrands}
+        columns={columns}
+        keyField="id"
+        downloadExcel={downloadProjectsExcel}
+        renderActions={renderActions}
+        addButton={{
+          label: "Add Project",
+          onClick: () => setIsDialogOpen(true),
+        }}
+        showDateFilter={true}
+        dateFormat="dd MMM yyyy"
+        defaultPageSize={10}
+        allowSelection={true}
+      />
+    </div>
   );
 };
 
-export default projectTable;
+export default page;

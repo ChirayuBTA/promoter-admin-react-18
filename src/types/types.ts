@@ -27,3 +27,25 @@ interface ICreateProjectBody {
 interface IDownloadSelectedExcel {
   ids: string[];
 }
+
+// Forms Types
+interface IBrand {
+  id: string;
+  name: string;
+  description?: string;
+  logoUrl?: string;
+  website?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  createdAt: string;
+}
+
+interface IProject {
+  id: string;
+  name: string;
+  brand: IBrand; // ✅ Change from 'string' to 'Brand'
+  startDate: string;
+  endDate: string;
+  description?: string;
+  createdAt: string;
+}
