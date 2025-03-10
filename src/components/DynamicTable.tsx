@@ -247,13 +247,14 @@ const DynamicTable = <T extends Record<string, any>>({
     if (downloadExcel) {
       try {
         await downloadExcel();
-        toast.success("Excel download initiated", {
-          position: "top-center",
-        });
+        // toast.success("Excel download initiated", {
+        //   position: "top-center",
+        // });
       } catch (error) {
-        toast.error("Failed to download Excel", {
-          position: "top-center",
-        });
+        // toast.error("Failed to download Excel", {
+        //   position: "top-center",
+        // });
+        console.log("error:", error);
       }
     } else {
       defaultDownloadExcel();
@@ -264,13 +265,14 @@ const DynamicTable = <T extends Record<string, any>>({
     if (downloadExcel && checkedItems.length > 0) {
       try {
         await downloadExcel(checkedItems);
-        toast.success("Excel download initiated", {
-          position: "top-center",
-        });
+        // toast.success("Excel download initiated", {
+        //   position: "top-center",
+        // });
       } catch (error) {
-        toast.error("Failed to download Excel", {
-          position: "top-center",
-        });
+        // toast.error("Failed to download Excel", {
+        //   position: "top-center",
+        // });
+        console.log("error:", error);
       }
     }
   };

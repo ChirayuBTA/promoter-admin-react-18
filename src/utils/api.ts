@@ -96,15 +96,30 @@ export const api = {
         handleResponse
       );
     },
-    downloadProjectsExcel: async function () {
+    // downloadProjectsExcel: async function () {
+    //   const reqOptions = {
+    //     headers: authHeaders(),
+    //     credentials: "include" as RequestCredentials,
+    //     cache: "no-store" as RequestCache,
+    //   };
+    //   return fetch(
+    //     `${apiUrl}/project/getSelectedProjectsDownload`,
+    //     reqOptions
+    //   ).then(handleResponse);
+    // },
+    downloadSelectedProjectsExcel: async function (
+      body: IDownloadSelectedExcel
+    ) {
       const reqOptions = {
-        headers: authHeaders(),
+        method: "POST",
+        body: JSON.stringify(body),
         credentials: "include" as RequestCredentials,
-        cache: "no-store" as RequestCache,
+        headers: authHeaders(),
       };
-      return fetch(`${apiUrl}/project/getAllBrandsDownload`, reqOptions).then(
-        handleResponse
-      );
+      return fetch(
+        `${apiUrl}/project/getSelectedProjectsDownload`,
+        reqOptions
+      ).then(handleResponse);
     },
     deleteProject: async function (query: any) {
       const reqOptions = {

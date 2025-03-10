@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import DynamicTable, { Column } from "@/components/DynamicTable"; // Adjust the import path
 import CreateProjectForm from "@/components/forms/CreateProjectForm";
+import * as XLSX from "xlsx";
 
 const page = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -86,10 +87,100 @@ const page = () => {
   // Download excel function
   const downloadProjectsExcel = async (selectedIds?: string[]) => {
     if (selectedIds && selectedIds.length > 0) {
-      const body = { ids: selectedIds };
-      return api.project.getProjects({});
+      try {
+        const body: IDownloadSelectedExcel = {
+          ids: selectedIds,
+        };
+        const response = await api.project.downloadSelectedProjectsExcel(body); // Fetch all data without filters
+        const jsonData = response.data;
+
+        // Only include visible columns in the export
+        const visibleColumns = columns.filter((col) => col.visible);
+
+        const formattedData = jsonData.map(
+          (project: IProject, index: number) => {
+            const row: Record<string, any> = { "Sr. No.": index + 1 };
+
+            visibleColumns.forEach((col) => {
+              if (col.key === "name") row["Name"] = project.name;
+              if (col.key === "brand") row["Brand"] = project.brand.name || "-";
+              if (col.key === "description")
+                row["Description"] = project.description || "-";
+              if (col.key === "startDate")
+                row["Start Date"] = project.startDate || "-";
+              if (col.key === "endDate")
+                row["End Date"] = project.endDate || "-";
+              if (col.key === "createdAt")
+                row["Created At"] = format(
+                  new Date(project.createdAt),
+                  "dd MMM yyyy"
+                );
+            });
+
+            return row;
+          }
+        );
+
+        const worksheet = XLSX.utils.json_to_sheet(formattedData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Projects");
+
+        XLSX.writeFile(workbook, "Selected Projects.xlsx");
+        toast.success("Excel download initiated", {
+          position: "top-center",
+        });
+        // closeDownloadDialog();
+      } catch (error) {
+        toast.error("Failed to download Excel", {
+          position: "top-center",
+        });
+      }
     } else {
-      return api.brand.getBrands({});
+      try {
+        const response = await api.project.getProjects({}); // Fetch all data without filters
+        const jsonData = response.data;
+
+        // Only include visible columns in the export
+        const visibleColumns = columns.filter((col) => col.visible);
+
+        const formattedData = jsonData.map(
+          (project: IProject, index: number) => {
+            const row: Record<string, any> = { "Sr. No.": index + 1 };
+
+            visibleColumns.forEach((col) => {
+              if (col.key === "name") row["Name"] = project.name;
+              if (col.key === "brand") row["Brand"] = project.brand.name || "-";
+              if (col.key === "description")
+                row["Description"] = project.description || "-";
+              if (col.key === "startDate")
+                row["Start Date"] = project.startDate || "-";
+              if (col.key === "endDate")
+                row["End Date"] = project.endDate || "-";
+              if (col.key === "createdAt")
+                row["Created At"] = format(
+                  new Date(project.createdAt),
+                  "dd MMM yyyy"
+                );
+            });
+
+            return row;
+          }
+        );
+
+        const worksheet = XLSX.utils.json_to_sheet(formattedData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Projects");
+
+        XLSX.writeFile(workbook, "Projects.xlsx");
+        toast.success("Excel download initiated", {
+          position: "top-center",
+        });
+        // closeDownloadDialog();
+      } catch (error) {
+        toast.error("Failed to download Excel", {
+          position: "top-center",
+        });
+      }
     }
   };
 

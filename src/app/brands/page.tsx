@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import * as XLSX from "xlsx";
 import BrandRegistrationForm from "@/components/forms/BrandRegistrationForm";
 import DynamicTable, { Column } from "@/components/DynamicTable"; // Adjust the import path
 
@@ -78,10 +79,95 @@ const page = () => {
   // Download excel function
   const downloadBrandsExcel = async (selectedIds?: string[]) => {
     if (selectedIds && selectedIds.length > 0) {
-      const body = { ids: selectedIds };
-      return api.brand.downloadSelectedBrandsExcel(body);
+      try {
+        const body: IDownloadSelectedExcel = {
+          ids: selectedIds,
+        };
+        const response = await api.brand.downloadSelectedBrandsExcel(body); // Fetch all data without filters
+        const jsonData = response.data;
+
+        // Only include visible columns in the export
+        const visibleColumns = columns.filter((col) => col.visible);
+
+        const formattedData = jsonData.map((brand: IBrand, index: number) => {
+          const row: Record<string, any> = { "Sr. No.": index + 1 };
+
+          visibleColumns.forEach((col) => {
+            if (col.key === "name") row["Name"] = brand.name;
+            if (col.key === "website") row["Website"] = brand.website || "-";
+            if (col.key === "description")
+              row["Description"] = brand.description || "-";
+            if (col.key === "logoUrl") row["logoUrl"] = brand.logoUrl || "-";
+            if (col.key === "contactEmail")
+              row["Email"] = brand.contactEmail || "-";
+            if (col.key === "contactPhone")
+              row["Phone"] = brand.contactPhone || "-";
+            if (col.key === "createdAt")
+              row["Created At"] = format(
+                new Date(brand.createdAt),
+                "dd MMM yyyy"
+              );
+          });
+
+          return row;
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(formattedData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Brands");
+
+        XLSX.writeFile(workbook, "Selected Brands.xlsx");
+        toast.success("Excel download initiated", {
+          position: "top-center",
+        });
+        // closeDownloadDialog();
+      } catch (error) {
+        toast.error("Failed to download Excel", {
+          position: "top-center",
+        });
+      }
     } else {
-      return api.brand.getBrands({});
+      try {
+        const response = await api.brand.getBrands({}); // Fetch all data without filters
+        const jsonData = response.data;
+
+        // Only include visible columns in the export
+        const visibleColumns = columns.filter((col) => col.visible);
+
+        const formattedData = jsonData.map((brand: IBrand, index: number) => {
+          const row: Record<string, any> = { "Sr. No.": index + 1 };
+
+          visibleColumns.forEach((col) => {
+            if (col.key === "name") row["Name"] = brand.name;
+            if (col.key === "website") row["Website"] = brand.website || "-";
+            if (col.key === "contactEmail")
+              row["Email"] = brand.contactEmail || "-";
+            if (col.key === "contactPhone")
+              row["Phone"] = brand.contactPhone || "-";
+            if (col.key === "createdAt")
+              row["Created At"] = format(
+                new Date(brand.createdAt),
+                "dd MMM yyyy"
+              );
+          });
+
+          return row;
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(formattedData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Brands");
+
+        XLSX.writeFile(workbook, "Brands.xlsx");
+        toast.success("Excel download initiated", {
+          position: "top-center",
+        });
+        // closeDownloadDialog();
+      } catch (error) {
+        toast.error("Failed to download Excel", {
+          position: "top-center",
+        });
+      }
     }
   };
 
