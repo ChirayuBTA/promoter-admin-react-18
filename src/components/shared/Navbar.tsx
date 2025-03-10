@@ -1,5 +1,5 @@
 import { ThemeToggle } from "./theme-toggle";
-import { UserDropdown } from "./ui/user-dropdown";
+import { UserDropdown } from "../ui/user-dropdown";
 
 export const Navbar = ({ pageTitle }: { pageTitle: string }) => {
   return (

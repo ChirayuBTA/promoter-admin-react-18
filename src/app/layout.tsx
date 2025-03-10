@@ -1,7 +1,7 @@
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/provider/theme-provider";
 import "@/app/globals.css";
 import type { Metadata } from "next";
-import AuthProvider from "@/components/SessionProvider";
+import AuthProvider from "@/components/provider/SessionProvider";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import { Toaster } from "react-hot-toast";
 

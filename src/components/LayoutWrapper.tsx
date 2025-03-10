@@ -1,8 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Sidebar } from "@/components/Sidebar";
-import { Navbar } from "@/components/Navbar";
+import { Sidebar } from "@/components/shared/Sidebar";
+import { Navbar } from "@/components/shared/Navbar";
 
 export default function LayoutWrapper({
   children,

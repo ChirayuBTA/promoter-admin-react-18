@@ -43,7 +43,7 @@ const sidebarItems: SidebarItem[] = [
     subItems: [
       { name: "Brand", href: "/brands", icon: Users },
       { name: "Project", href: "/projects", icon: Users },
-      { name: "Vendor", href: "#", icon: Users },
+      { name: "Vendor", href: "/vendors", icon: Users },
       { name: "Promoter", href: "#", icon: Users },
       { name: "City", href: "#", icon: Users },
       { name: "Area", href: "#", icon: Users },
