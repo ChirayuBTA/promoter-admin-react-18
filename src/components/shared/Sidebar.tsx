@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import logo from "../../public/Images/DirectX-Logo.png";
+import logo from "../../../public/Images/DirectX-Logo.png";
 
 type SidebarItem = {
   name: string;
