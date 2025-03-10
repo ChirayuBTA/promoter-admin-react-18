@@ -17,7 +17,7 @@ interface IUpdateBrandBody extends ICreateBrandBody {
 interface ICreateProjectBody {
   name: string;
   description?: string;
-  brand: string;
+  brandId: string;
   startDate?: string | null;
   endDate?: string | null;
   createdBy: string;

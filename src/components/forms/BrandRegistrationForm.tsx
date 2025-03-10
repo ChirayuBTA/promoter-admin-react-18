@@ -160,6 +160,7 @@ const BrandRegistrationForm = ({
         `Brand ${initialData ? "Updated" : "Created"} Successfully`,
         { position: "top-center" }
       );
+      window.location.reload();
     } catch (error) {
       console.error("Error saving brand:", error);
       toast.error(`Failed to ${initialData ? "Update" : "Create"} Brand`, {

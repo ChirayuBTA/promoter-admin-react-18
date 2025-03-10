@@ -67,7 +67,7 @@ const CreateProjectForm = ({
 
   const [formData, setFormData] = useState<ICreateProjectBody>({
     name: "",
-    brand: "",
+    brandId: "",
     startDate: null,
     endDate: null,
     description: "",
@@ -155,7 +155,7 @@ const CreateProjectForm = ({
 
       setFormData({
         name: initialData.name || "",
-        brand: initialData.brand || "",
+        brandId: initialData.brand || "",
         startDate: initialData.startDate || "",
         endDate: initialData.endDate || "",
         description: initialData.description || "",
@@ -169,7 +169,7 @@ const CreateProjectForm = ({
           try {
             const response = await api.brand.getBrands(initialData.brand);
             if (response) {
-              setSelectedBrand(response);
+              setSelectedBrand(response.data[0]);
             }
           } catch (error) {
             console.error("Error fetching initial brand:", error);
@@ -232,7 +232,7 @@ const CreateProjectForm = ({
     setSelectedBrand(brand);
     setFormData((prev) => ({
       ...prev,
-      brand: brand.id,
+      brandId: brand.id,
     }));
     setBrandPopoverOpen(false); // Close popover
   };
@@ -246,7 +246,7 @@ const CreateProjectForm = ({
       isValid = false;
     }
 
-    if (!formData.brand) {
+    if (!formData.brandId) {
       newErrors.brand = "Brand selection is required";
       isValid = false;
     }
@@ -297,6 +297,7 @@ const CreateProjectForm = ({
         `Project ${initialData ? "Updated" : "Created"} Successfully`,
         { position: "top-center" }
       );
+      window.location.reload();
     } catch (error) {
       console.error("Error saving project:", error);
       toast.error(`Failed to ${initialData ? "Update" : "Create"} project`, {

@@ -122,19 +122,19 @@ const page = () => {
 
   return (
     <div className="container mx-auto py-8">
-      {/* <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-fit h-fit overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl">
-              {selectedProject ? "Edit Brand" : "Brand Registration"}
+              {selectedProject ? "Edit Project" : "Project Registration"}
             </DialogTitle>
           </DialogHeader>
           <CreateProjectForm
-            initialData={selectedBrand}
+            initialData={selectedProject}
             onClose={handleCloseDialog}
           />
         </DialogContent>
-      </Dialog> */}
+      </Dialog>
 
       <DynamicTable<IProject>
         title="Projects"
