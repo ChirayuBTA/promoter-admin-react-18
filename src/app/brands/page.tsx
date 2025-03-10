@@ -400,6 +400,8 @@ const BrandTable = () => {
       endDate: undefined,
       key: "selection",
     });
+    setSortBy("");
+    setOrder("");
   };
 
   return (
@@ -853,7 +855,10 @@ const BrandTable = () => {
             <p className="text-sm text-muted-foreground">Rows per page:</p>
             <Select
               value={limit.toString()}
-              onValueChange={(value) => setLimit(Number(value))}
+              onValueChange={(value) => {
+                setLimit(Number(value));
+                setPage(1);
+              }}
             >
               <SelectTrigger className="w-20">
                 <SelectValue placeholder={limit.toString()} />
